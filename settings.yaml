@@ -1,0 +1,30 @@
+Lykke.Job.Bil2IntegrationsMonitoringJob:
+  Db:
+    LogsConnString:
+      settings-key: Lykke.Job.Bil2IntegrationsMonitoringJob-LogsConnString
+      types:
+        - AzureTableStorage
+  AzureQueue:
+    ConnectionString:
+      settings-key: ConnectionString
+      types:
+        - AzureTableStorage
+  Rabbit:
+    ConnectionString:
+      settings-key: ConnectionString
+      types:
+        - RabbitMq
+    ExchangeName:
+      settings-key: ExchangeName
+SlackNotifications:
+    AzureQueue:
+        ConnectionString:
+            settings-key: SlackNotificationsConnString
+            types:
+                - AzureTableStorage
+        QueueName:
+            settings-key: SlackQueueName
+MonitoringServiceClient:
+    MonitoringServiceUrl:
+        settings-key: MonitoringServiceUrl
+

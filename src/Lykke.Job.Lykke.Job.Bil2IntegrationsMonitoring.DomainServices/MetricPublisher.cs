@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using Common;
+using Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Domain.Metrics;
 using Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Domain.Services;
 using Prometheus;
 using System;
@@ -31,14 +32,13 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.DomainServices
         }
 
         public Task PublishGaugeAsync(
-            string integrationName,
-            MetricGaugeType metricType,
-            double metricValue,
+            IMetric metric,
             params KeyValuePair<string, string>[] additionalLabels)
         {
+            var integrationName = metric.IntegrationName;
             var gauge = Metrics.CreateGauge(
-                name: $"bil2_{integrationName}_{GetMetricName(metricType)}",
-                help: $"measuring {GetMetricName(metricType)}",
+                name: $"bil2_{integrationName}_{metric.Name}",
+                help: $"measuring {metric.Name}",
                 configuration: new GaugeConfiguration
                 {
                     SuppressInitialValue = false,
@@ -46,7 +46,7 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.DomainServices
                 });
 
             gauge.WithLabels(additionalLabels.Select(p => p.Value).ToArray())
-                .Set(metricValue);
+                .Set(metric.Value);
 
             return Task.CompletedTask;
         }
@@ -64,18 +64,6 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.DomainServices
         public void Stop()
         {
             _metricPusher.Stop();
-        }
-
-        public static string GetMetricName(Enum value)
-        {
-            var fi = value.GetType().GetField(value.ToString());
-
-            var attributes =
-                (PrometheusNameTemplate[])fi.GetCustomAttributes(
-                    typeof(PrometheusNameTemplate),
-                    false);
-
-            return attributes.Length > 0 ? attributes[0].Name : value.ToString();
         }
     }
 }

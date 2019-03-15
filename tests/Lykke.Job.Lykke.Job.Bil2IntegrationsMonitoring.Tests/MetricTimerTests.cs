@@ -1,7 +1,6 @@
-﻿using System;
-using System.Threading;
+﻿using Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.DomainServices;
+using System;
 using System.Threading.Tasks;
-using Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.DomainServices;
 using Xunit;
 
 namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Tests
@@ -20,7 +19,7 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Tests
             await Task.Delay(dealyMs);
             timer.Dispose();
 
-            Assert.True(metric.Value >= dealyMs / 1_000d);
+            AssertMetric(metric, dealyMs);
         }
 
         [Fact]
@@ -33,40 +32,46 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Tests
                 await Task.Delay(dealyMs);
             }
 
-            Assert.True(metric.Value >= dealyMs / 1_000d);
+            AssertMetric(metric, dealyMs);
         }
 
         [Fact]
-        public async Task MeasureSafelyWithTimeoutAsync_FastExecution_CalculatesTime()
+        public async Task MeasureSafelyAsync_FastExecution_CalculatesTime()
         {
             var dealyMs = 100;
             var metric = new TestMetric(_integrationName);
 
-            await MetricTimer.MeasureSafelyWithTimeoutAsync(async () =>
+            await MetricTimer.MeasureSafelyAsync(async () =>
                 {
                     await Task.Delay(dealyMs);
                 },
-                metric,
-                TimeSpan.FromMinutes(1));
+                metric);
 
-            Assert.True(metric.Value >= dealyMs / 1_000d);
+            AssertMetric(metric, dealyMs);
         }
 
         [Fact]
-        public async Task MeasureSafelyWithTimeoutAsync_SlowExecution_MetricsEqualToTimeout()
+        public async Task MeasureSafelyAsync_SlowExecution_MetricsEqualToTimeout()
         {
-            var dealyMs = 10000;
             var timeoutMs = 200;
             var metric = new TestMetric(_integrationName);
 
-            await MetricTimer.MeasureSafelyWithTimeoutAsync(async () =>
+            await MetricTimer.MeasureSafelyAsync(async () =>
                 {
-                    await Task.Delay(dealyMs);
+                    await Task.Delay(timeoutMs);
+                    throw new TimeoutException();
                 },
-                metric,
-                TimeSpan.FromMilliseconds(timeoutMs));
+                metric);
 
-            Assert.True(metric.Value >= timeoutMs / 1_000d);
+            AssertMetric(metric, timeoutMs);
+        }
+
+        private static void AssertMetric(TestMetric metric, int timeoutMs)
+        {
+            var approximation = metric.Value / (timeoutMs / 1_000d);
+            //max 15 % diff 
+            Assert.True(approximation <= 1.15);
+            Assert.True(approximation >= 1.0);
         }
     }
 }

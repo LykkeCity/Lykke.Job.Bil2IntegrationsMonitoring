@@ -31,12 +31,13 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.DomainServices
             var metric = new TransactionExecutorIsAliveResponseTimeMetric(_integrationName);
             var diseaseMetric = new TransactionExecutorDiseasePresenseMetric(_integrationName);
             TransactionsExecutorIsAliveResponse isAliveResponse = null;
-            using (var timer = new MetricTimer(metric))
-            {
-                isAliveResponse = await _transactionsExecutorApi.GetIsAliveAsync();
-            }
+            await MetricTimer.MeasureSafelyAsync(async () =>
+                {
+                    isAliveResponse = await _transactionsExecutorApi.GetIsAliveAsync();
+                },
+                metric);
 
-            diseaseMetric.Set(string.IsNullOrEmpty(isAliveResponse.Disease) ? 0 : 1);
+            diseaseMetric.Set(isAliveResponse == null || !string.IsNullOrEmpty(isAliveResponse.Disease) ? 1 : 0);
 
             await _metricPublisher.PublishGaugeAsync(diseaseMetric);
             await _metricPublisher.PublishGaugeAsync(metric);
@@ -44,19 +45,24 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.DomainServices
 
         public async Task MeasureGetInfoAsync()
         {
-            var metric = new TransactionExecutorIsAliveResponseTimeMetric(_integrationName);
+            var metric = new TransactionExecutorIntegrationInfoResponseTimeMetric(_integrationName);
             var timeFromLastBlockMetric = new TimeFromLastBlockUpdateMetric(_integrationName);
             IntegrationInfoResponse response = null;
-            using (var timer = new MetricTimer(metric))
+
+            await MetricTimer.MeasureSafelyAsync(async () =>
+                {
+                    response = await _transactionsExecutorApi.GetIntegrationInfoAsync();
+                },
+                metric);
+
+            if (response != null)
             {
-                response = await _transactionsExecutorApi.GetIntegrationInfoAsync();
+                var diff = DateTime.UtcNow - response.Blockchain.LatestBlockMoment;
+                timeFromLastBlockMetric.Set(diff.TotalSeconds);
+                await _metricPublisher.PublishGaugeAsync(timeFromLastBlockMetric);
             }
 
-            var diff = DateTime.UtcNow - response.Blockchain.LatestBlockMoment;
-            timeFromLastBlockMetric.Set(diff.Seconds);
-
             await _metricPublisher.PublishGaugeAsync(metric);
-            await _metricPublisher.PublishGaugeAsync(timeFromLastBlockMetric);
         }
 
         public async Task MeasureDependencyVersionsAsync()

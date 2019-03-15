@@ -1,4 +1,5 @@
-﻿using Lykke.Bil2.Client.SignService;
+﻿using System;
+using Lykke.Bil2.Client.SignService;
 using Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Domain.Extensions;
 using Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Domain.Metrics;
 using Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Domain.Services;
@@ -25,10 +26,9 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.DomainServices
         public async Task MeasureIsAliveAsync()
         {
             var metric = new SignServiceIsAliveResponseTimeMetric(_integrationName);
-            using (var timer = new MetricTimer(metric))
-            {
-                await _signServiceApi.GetIsAliveAsync();
-            }
+
+            await MetricTimer.MeasureSafelyAsync(async () => { await _signServiceApi.GetIsAliveAsync(); },
+                metric);
 
             await _metricPublisher.PublishGaugeAsync(metric);
         }

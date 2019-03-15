@@ -22,34 +22,28 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.DomainServices
             _metric.Set(CalculateSeconds(_sw.Elapsed));
         }
 
-        public static async Task MeasureSafelyWithTimeoutAsync(
+        public static async Task MeasureSafelyAsync(
             Func<Task> func, 
-            MetricBase metric, 
-            TimeSpan timeout)
+            MetricBase metric)
         {
             try
             {
-                var measureTask = func();
-                var timeoutTask = Task.Delay(timeout);
-                Task completedTask;
-
                 using (MetricTimer timer = new MetricTimer(metric))
                 {
-                    completedTask = await Task.WhenAny(measureTask, timeoutTask);
+                    await func();
                 }
-
-                if (completedTask == timeoutTask)
-                    metric.Set(CalculateSeconds(timeout));
+            }
+            catch (TimeoutException e)
+            {
             }
             catch (Exception e)
             {
-                metric.Set(CalculateSeconds(timeout));
             }
         }
 
         private static double CalculateSeconds(TimeSpan timeSpan)
         {
-            return timeSpan.Milliseconds / 1_000d;
+            return timeSpan.TotalMilliseconds / 1_000d;
         }
     }
 }

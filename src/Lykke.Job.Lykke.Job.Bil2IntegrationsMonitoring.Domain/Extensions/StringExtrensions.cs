@@ -15,6 +15,8 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Domain.Extensions
                     sb.Append("_");
             }
 
+            sb.Append(char.ToLower(str[str.Length - 1]));
+
             return sb.ToString();
         }
     }

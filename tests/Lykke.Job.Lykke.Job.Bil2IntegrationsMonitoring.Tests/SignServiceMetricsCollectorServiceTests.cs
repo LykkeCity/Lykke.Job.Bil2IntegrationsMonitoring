@@ -61,11 +61,12 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Tests
         public async Task MeasureIsAliveAsync_SignServiceIsUnavailable_MetricIsNotCalculated()
         {
             //ARRANGE
+            var timeout = TimeSpan.FromMilliseconds(500);
             Mock<ISignServiceApi> signServiceApi = new Mock<ISignServiceApi>();
             Mock<IMetricPublisher> metricPublisher = new Mock<IMetricPublisher>();
 
             signServiceApi.Setup(x => x.GetIsAliveAsync())
-                .ThrowsAsync(new Exception("Something went wrong."))
+                .ThrowsAsync(new TimeoutException("Something went wrong."), timeout)
                 .Verifiable();
 
             metricPublisher
@@ -85,7 +86,7 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Tests
             signServiceApi.Verify(x => x.GetIsAliveAsync(), Times.Once);
             metricPublisher
                 .Verify(x =>
-                        x.PublishGaugeAsync(It.Is<IMetric>(y => y.Value >= 0.333),
+                        x.PublishGaugeAsync(It.Is<IMetric>(y => y.Value >= timeout.Seconds),
                             It.IsAny<KeyValuePair<string, string>[]>()),
                     Times.Once);
         }

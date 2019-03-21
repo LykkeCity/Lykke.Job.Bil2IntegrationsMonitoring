@@ -1,9 +1,10 @@
 ﻿using JetBrains.Annotations;
 using Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Settings;
+using Lykke.Sdk;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using Lykke.Sdk;
+using Hangfire;
 
 namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring
 {
@@ -19,14 +20,17 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring
         [UsedImplicitly]
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {
-            return services.BuildServiceProvider<AppSettings>(options =>
+            var serviceProvider =
+                services
+                .AddHangfire(ctx => { })
+                .BuildServiceProvider<AppSettings>(options =>
             {
                 options.SwaggerOptions = _swaggerOptions;
 
                 options.Logs = logs =>
                 {
-                    logs.AzureTableName = "Lykke.Job.Bil2IntegrationsMonitoringJobLog";
-                    logs.AzureTableConnectionStringResolver = settings => settings.MonitoringJob.Db.LogsConnString;
+                    logs.AzureTableName = "Bil2IntegrationsMonitoringJobLog";
+                    logs.AzureTableConnectionStringResolver = settings => settings.Bil2MonitoringJobSettings.Db.LogsConnString;
 
                     // TODO: You could add extended logging configuration here:
                     /* 
@@ -60,6 +64,8 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring
                 };
                 */
             });
+
+            return serviceProvider;
         }
 
         [UsedImplicitly]
@@ -82,6 +88,8 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring
                 };
                 */
             });
+
+            app.UseHangfireDashboard();
         }
     }
 }

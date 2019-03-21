@@ -7,6 +7,7 @@ using Moq;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Lykke.Bil2.Client.SignService.Services;
 using Xunit;
 
 namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Tests
@@ -20,6 +21,7 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Tests
         {
             //ARRANGE
             Mock<ISignServiceApi> signServiceApi = new Mock<ISignServiceApi>();
+            Mock<ISignServiceApiProvider> signServiceApiProvider = new Mock<ISignServiceApiProvider>();
             Mock<IMetricPublisher> metricPublisher = new Mock<IMetricPublisher>();
 
             signServiceApi.Setup(x => x.GetIsAliveAsync())
@@ -35,6 +37,9 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Tests
                 })
                 .Verifiable();
 
+            signServiceApiProvider.Setup(x => x.GetApi(It.IsAny<string>()))
+                .Returns(signServiceApi.Object);
+
             metricPublisher
                 .Setup(x => x.PublishGaugeAsync(It.IsNotNull<IMetric>(), It.IsAny<KeyValuePair<string, string>[]>()))
                 .Returns(Task.CompletedTask)
@@ -43,7 +48,7 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Tests
             SignServiceMetricsCollectorService signServiceCollector =
                 new SignServiceMetricsCollectorService("TestIntegration",
                     metricPublisher.Object,
-                    signServiceApi.Object);
+                    signServiceApiProvider.Object);
 
             //ACT
             await signServiceCollector.MeasureIsAliveAsync();
@@ -64,10 +69,14 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Tests
             var timeout = TimeSpan.FromMilliseconds(500);
             Mock<ISignServiceApi> signServiceApi = new Mock<ISignServiceApi>();
             Mock<IMetricPublisher> metricPublisher = new Mock<IMetricPublisher>();
+            Mock<ISignServiceApiProvider> signServiceApiProvider = new Mock<ISignServiceApiProvider>();
 
             signServiceApi.Setup(x => x.GetIsAliveAsync())
                 .ThrowsAsync(new TimeoutException("Something went wrong."), timeout)
                 .Verifiable();
+
+            signServiceApiProvider.Setup(x => x.GetApi(It.IsAny<string>()))
+                .Returns(signServiceApi.Object);
 
             metricPublisher
                 .Setup(x => x.PublishGaugeAsync(It.IsNotNull<IMetric>(), It.IsAny<KeyValuePair<string, string>[]>()))
@@ -77,7 +86,7 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Tests
             SignServiceMetricsCollectorService signServiceCollector =
                 new SignServiceMetricsCollectorService("TestIntegration",
                     metricPublisher.Object,
-                    signServiceApi.Object);
+                    signServiceApiProvider.Object);
 
             //ACT
             await signServiceCollector.MeasureIsAliveAsync();

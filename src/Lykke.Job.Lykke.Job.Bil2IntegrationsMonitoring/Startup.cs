@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using Hangfire;
+using Hangfire.Mongo;
 
 namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring
 {

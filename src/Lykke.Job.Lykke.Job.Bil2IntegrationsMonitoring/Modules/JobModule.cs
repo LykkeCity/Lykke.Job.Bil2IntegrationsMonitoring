@@ -3,6 +3,7 @@ using Autofac.Extensions.DependencyInjection;
 using Common;
 using Hangfire;
 using Hangfire.MemoryStorage;
+using Hangfire.Mongo;
 using Lykke.Bil2.Client.SignService;
 using Lykke.Bil2.Client.TransactionsExecutor;
 using Lykke.Common.Log;
@@ -72,41 +73,26 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Modules
                 .As<IStopable>()
                 .SingleInstance();
 
-            _services.AddSignServiceClient((options) =>
-            {
-                options.Timeout = _settings.CurrentValue.Bil2MonitoringJobSettings.BlockchainIntegrationTimeout;
-                foreach (var integration in _settings.CurrentValue.Bil2MonitoringJobSettings.BlockchainIntegrations.Integrations)
-                {
-                    options.AddIntegration(integration.Name, (signServiceOptions) =>
-                    {
-                        signServiceOptions.Url = integration.SignServiceUrl;
-                    });
-                }
-            });
-
-            _services.AddTransactionsExecutorClient((options) =>
-            {
-                options.Timeout = _settings.CurrentValue.Bil2MonitoringJobSettings.BlockchainIntegrationTimeout;
-                foreach (var integration in _settings.CurrentValue.Bil2MonitoringJobSettings.BlockchainIntegrations.Integrations)
-                {
-                    options.AddIntegration(integration.Name, (transactionExecutorOptions) =>
-                    {
-                        transactionExecutorOptions.Url = integration.TransactionExecutorUrl;
-                    });
-                }
-            });
-
-            _services.AddSingleton(
-                new BlockchainIntegrationResolver(_settings.CurrentValue.Bil2MonitoringJobSettings
-                    .BlockchainIntegrations.Integrations));
-
             builder.Populate(_services);
         }
 
         private void StartHangfireServer(IContainer container)
         {
             var logProvider = new LykkeLogProvider(container.Resolve<ILogFactory>());
-            GlobalConfiguration.Configuration.UseMemoryStorage();
+
+            var migrationOptions = new MongoMigrationOptions
+            {
+                Strategy = MongoMigrationStrategy.Migrate,
+                BackupStrategy = MongoBackupStrategy.Collections
+            };
+            var storageOptions = new MongoStorageOptions
+            {
+                MigrationOptions = migrationOptions
+            };
+
+            GlobalConfiguration.Configuration.UseMongoStorage(
+                _settings.CurrentValue.Bil2MonitoringJobSettings.Db.MongoConnString,
+                "Bil2IntegrationsMonitoring", storageOptions);
             GlobalConfiguration.Configuration.UseLogProvider(logProvider)
                 .UseAutofacActivator(container);
 

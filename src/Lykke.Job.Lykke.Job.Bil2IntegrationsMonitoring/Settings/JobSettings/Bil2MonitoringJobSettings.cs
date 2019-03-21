@@ -12,9 +12,5 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Settings.JobSettings
         public TimeSpan BlockchainIntegrationTimeout { get; set; }
 
         public DbSettings Db { get; set; }
-
-        //public RabbitMqSettings Rabbit { get; set; }
-
-        public BlockchainIntegrations BlockchainIntegrations { get; set; }
     }
 }

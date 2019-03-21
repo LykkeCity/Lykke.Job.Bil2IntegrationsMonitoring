@@ -6,5 +6,7 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Settings.JobSettings
     {
         [AzureTableCheck]
         public string LogsConnString { get; set; }
+
+        public string MongoConnString { get; set; }
     }
 }

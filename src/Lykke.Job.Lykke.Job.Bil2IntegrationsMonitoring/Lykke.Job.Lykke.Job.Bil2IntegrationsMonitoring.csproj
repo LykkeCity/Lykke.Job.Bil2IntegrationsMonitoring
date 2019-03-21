@@ -19,6 +19,7 @@
     <PackageReference Include="Hangfire" Version="1.6.23" />
     <PackageReference Include="Hangfire.Autofac" Version="2.3.1" />
     <PackageReference Include="Hangfire.MemoryStorage.Core" Version="1.4.0" />
+    <PackageReference Include="Hangfire.Mongo" Version="0.5.15" />
     <PackageReference Include="Lykke.Bil2.Client.BlocksReader" Version="1.0.0-beta.23" />
     <PackageReference Include="Lykke.Bil2.Client.SignService" Version="1.0.0-beta.12" />
     <PackageReference Include="Lykke.Bil2.Client.TransactionsExecutor" Version="1.0.0-beta.12" />

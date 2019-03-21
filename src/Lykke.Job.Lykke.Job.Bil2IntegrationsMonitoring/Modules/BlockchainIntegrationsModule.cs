@@ -1,8 +1,11 @@
 ﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using Lykke.Bil2.Client.SignService;
 using Lykke.Bil2.Client.SignService.Services;
+using Lykke.Bil2.Client.TransactionsExecutor;
 using Lykke.Bil2.Client.TransactionsExecutor.Services;
 using Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Domain.Services;
+using Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Services;
 using Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Services.Factories;
 using Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Settings;
 using Lykke.SettingsReader;
@@ -37,6 +40,33 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Modules
                     ctx.GetRequiredService<IMetricPublisher>(),
                     ctx.GetRequiredService<ISignServiceApiProvider>());
             });
+
+            _services.AddSignServiceClient((options) =>
+            {
+                options.Timeout = _settings.CurrentValue.Bil2MonitoringJobSettings.BlockchainIntegrationTimeout;
+                foreach (var integration in _settings.CurrentValue.BlockchainIntegrations.Integrations)
+                {
+                    options.AddIntegration(integration.Name, (signServiceOptions) =>
+                    {
+                        signServiceOptions.Url = integration.SignServiceUrl;
+                    });
+                }
+            });
+
+            _services.AddTransactionsExecutorClient((options) =>
+            {
+                options.Timeout = _settings.CurrentValue.Bil2MonitoringJobSettings.BlockchainIntegrationTimeout;
+                foreach (var integration in _settings.CurrentValue.BlockchainIntegrations.Integrations)
+                {
+                    options.AddIntegration(integration.Name, (transactionExecutorOptions) =>
+                    {
+                        transactionExecutorOptions.Url = integration.TransactionExecutorUrl;
+                    });
+                }
+            });
+
+            _services.AddSingleton(
+                new BlockchainIntegrationResolver(_settings.CurrentValue.BlockchainIntegrations.Integrations));
 
             builder.Populate(_services);
         }

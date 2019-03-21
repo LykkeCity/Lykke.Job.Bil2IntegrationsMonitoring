@@ -1,4 +1,4 @@
-FROM microsoft/dotnet:2.1-aspnetcore-runtime
+FROM microsoft/dotnet:2.2-aspnetcore-runtime
 WORKDIR /app
 COPY . .
-ENTRYPOINT ["dotnet", "Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.dll"]
+ENTRYPOINT ["dotnet", "Lykke.Job.Bil2IntegrationsMonitoring.dll"]

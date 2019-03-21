@@ -2,14 +2,10 @@
 using Autofac.Extensions.DependencyInjection;
 using Common;
 using Hangfire;
-using Hangfire.MemoryStorage;
 using Hangfire.Mongo;
-using Lykke.Bil2.Client.SignService;
-using Lykke.Bil2.Client.TransactionsExecutor;
 using Lykke.Common.Log;
 using Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Domain.Services;
 using Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.DomainServices;
-using Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.PeriodicalHandlers;
 using Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Services;
 using Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Settings;
 using Lykke.JobTriggers.Extenstions;
@@ -117,39 +113,6 @@ namespace Lykke.Job.Lykke.Job.Bil2IntegrationsMonitoring.Modules
                 pool =>
                 {
                 });
-        }
-
-        private void RegisterPeriodicalHandlers(ContainerBuilder builder)
-        {
-            // TODO: You should register each periodical handler in DI container as IStartable singleton and autoactivate it
-
-            builder.RegisterType<MyPeriodicalHandler>()
-                .As<IStartable>()
-                .As<IStopable>()
-                .SingleInstance();
-        }
-
-        private void RegisterRabbitMqSubscribers(ContainerBuilder builder)
-        {
-            // TODO: You should register each subscriber in DI container as IStartable singleton and autoactivate it
-
-            //builder.RegisterType<MyRabbitSubscriber>()
-            //    .As<IStartable>()
-            //    .SingleInstance()
-            //    .WithParameter("connectionString", _settings.Rabbit.ConnectionString)
-            //    .WithParameter("exchangeName", _settings.Rabbit.ExchangeName);
-        }
-
-        private void RegisterRabbitMqPublishers(ContainerBuilder builder)
-        {
-            // TODO: You should register each publisher in DI container as publisher specific interface and as IStartable,
-            // as singleton and do not autoactivate it
-
-            //builder.RegisterType<MyRabbitPublisher>()
-            //    .As<IMyRabbitPublisher>()
-            //    .As<IStartable>()
-            //    .SingleInstance()
-            //    .WithParameter(TypedParameter.From(_settings.Rabbit.ConnectionString));
         }
     }
 }
